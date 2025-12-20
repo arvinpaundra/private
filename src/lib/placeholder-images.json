@@ -1,0 +1,28 @@
+{
+  "placeholderImages": [
+    {
+      "id": "math-subject",
+      "description": "An illustration representing mathematics",
+      "imageUrl": "https://images.unsplash.com/photo-1747654804374-c86b5681ff83?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8bWF0aGVtYXRpY3MlMjBnZW9tZXRyeXxlbnwwfHx8fDE3NjU5OTMxNzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "mathematics geometry"
+    },
+    {
+      "id": "science-subject",
+      "description": "An illustration representing science",
+      "imageUrl": "https://images.unsplash.com/photo-1694230155228-cdde50083573?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxzY2llbmNlJTIwY2hlbWlzdHJ5fGVufDB8fHx8MTc2NjA2NzQ3OHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "science chemistry"
+    },
+    {
+      "id": "history-subject",
+      "description": "An illustration representing history",
+      "imageUrl": "https://images.unsplash.com/photo-1739873059492-9d92ef3f1d73?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxoaXN0b3J5JTIwYXJ0aWZhY3RzfGVufDB8fHx8MTc2NjA1MTQ4N3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "history artifacts"
+    },
+    {
+      "id": "english-subject",
+      "description": "An illustration representing English language arts",
+      "imageUrl": "https://images.unsplash.com/photo-1702848946800-1afb31a03814?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxib29rcyUyMGxpYnJhcnl8ZW58MHx8fHwxNzY2MDMyMzQzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "books library"
+    }
+  ]
+}
