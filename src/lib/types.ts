@@ -46,3 +46,21 @@ export interface Submission {
   score: number;
   submittedAt: string;
 }
+
+// Generic API Response Wrapper
+export interface ApiResponse<T> {
+  meta: {
+    code: number;
+    message: string;
+  };
+  data: T;
+  errors: Record<string, any> | null;
+}
+
+// Specific data contract for Dashboard Statistics
+export interface DashboardStats {
+  total_modules: number;
+  total_subjects: number;
+  total_grades: number;
+  total_submitted_submissions: number;
+}

@@ -1,8 +1,12 @@
 'use server';
 
 import * as z from 'zod';
-import { addModule, addQuestion, updateQuestion, deleteQuestion } from '@/lib/data-actions';
-import { Module, Question } from '@/lib/types';
+import {
+  addModule,
+  deleteQuestion,
+  replaceQuestionsForModule,
+} from '@/lib/data-actions';
+import { Module } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
 const moduleSchema = z.object({
@@ -40,7 +44,7 @@ export async function createModuleAction(
       issues: errors.formErrors,
     };
   }
-  
+
   const { title, subjectId, gradeId, description } = validated.data;
 
   try {
@@ -52,15 +56,17 @@ export async function createModuleAction(
     });
 
     revalidatePath('/dashboard/modules');
-    return { 
+    return {
       message: `Berhasil membuat modul "${newModule.title}".`,
       success: true,
       data: newModule,
     };
-
   } catch (error) {
     console.error(error);
-    return { message: 'Terjadi kesalahan saat membuat modul.', success: false };
+    return {
+      message: 'Terjadi kesalahan saat membuat modul.',
+      success: false,
+    };
   }
 }
 
@@ -70,11 +76,18 @@ const choiceSchema = z.object({
 });
 
 const questionSchema = z.object({
-  prompt: z.string().min(5, 'Prompt harus minimal 5 karakter'),
-  choices: z.array(choiceSchema).min(2, 'Harus memiliki setidaknya 2 pilihan').max(4, 'Tidak boleh memiliki lebih dari 4 pilihan'),
+  id: z.string(),
+  prompt: z.string().min(5, 'Isi pertanyaan harus minimal 5 karakter'),
+  choices: z
+    .array(choiceSchema)
+    .min(2, 'Harus memiliki setidaknya 2 pilihan')
+    .max(4, 'Tidak boleh lebih dari 4 pilihan'),
   correctAnswer: z.string().min(1, 'Silakan pilih jawaban yang benar'),
+});
+
+const questionsSchemaForAction = z.object({
   moduleId: z.string(),
-  questionId: z.string().optional(),
+  questions: z.array(questionSchema),
 });
 
 export type QuestionFormState = {
@@ -84,72 +97,98 @@ export type QuestionFormState = {
   issues?: string[];
 };
 
-export async function saveQuestionAction(
+export async function saveAllQuestionsAction(
   prevState: QuestionFormState,
   formData: FormData
 ): Promise<QuestionFormState> {
+  const moduleId = formData.get('moduleId') as string;
 
-  const choiceEntries = Array.from(formData.entries())
-    .filter(([key]) => key.startsWith('choices.'))
-    .reduce<Record<string, { id: string; text: string }>>((acc, [key, value]) => {
-      const match = key.match(/choices\.(\d+)\.(id|text)/);
-      if (match) {
-        const [, index, field] = match;
-        if (!acc[index]) {
-          acc[index] = { id: '', text: '' };
-        }
-        acc[index][field as 'id' | 'text'] = value as string;
+  // Manually construct the questions array from FormData
+  const questions: any[] = [];
+  const questionIndices = new Set<string>();
+
+  // First, find all unique question indices
+  for (const key of formData.keys()) {
+    const match = key.match(/^questions\.(\d+)\.id$/);
+    if (match) {
+      questionIndices.add(match[1]);
+    }
+  }
+
+  // Now, build each question object
+  for (const index of Array.from(questionIndices).sort()) {
+    const questionId = formData.get(`questions.${index}.id`) as string;
+    const prompt = formData.get(`questions.${index}.prompt`) as string;
+    const correctAnswer = formData.get(
+      `questions.${index}.correctAnswer`
+    ) as string;
+
+    // Build choices for this question
+    const choices: any[] = [];
+    const choiceIndices = new Set<string>();
+    for (const key of formData.keys()) {
+      const choiceMatch = key.match(
+        `^questions\.${index}\.choices\.(\\d+)\.id$`
+      );
+      if (choiceMatch) {
+        choiceIndices.add(choiceMatch[1]);
       }
-      return acc;
-    }, {});
+    }
 
-  const choices = Object.values(choiceEntries).filter(c => c.id || c.text);
+    for (const choiceIndex of Array.from(choiceIndices).sort()) {
+      const choiceId = formData.get(
+        `questions.${index}.choices.${choiceIndex}.id`
+      );
+      const choiceText = formData.get(
+        `questions.${index}.choices.${choiceIndex}.text`
+      );
+      if (choiceId && choiceText !== null) {
+        choices.push({ id: choiceId, text: choiceText });
+      }
+    }
 
-  const validated = questionSchema.safeParse({
-    prompt: formData.get('prompt'),
-    choices: choices,
-    correctAnswer: formData.get('correctAnswer'),
-    moduleId: formData.get('moduleId'),
-    questionId: formData.get('questionId'),
+    questions.push({
+      id: questionId,
+      prompt,
+      choices,
+      correctAnswer,
+    });
+  }
+
+  const validated = questionsSchemaForAction.safeParse({
+    moduleId,
+    questions,
   });
 
   if (!validated.success) {
-    const errors = validated.error.flatten();
-    console.log(errors);
+    console.log('Validation Errors:', validated.error.flatten());
     return {
-      message: 'Validasi gagal. Pastikan semua bidang diisi dengan benar.',
+      message: 'Validasi gagal. Silakan periksa semua kolom.',
       success: false,
-      fields: errors.fieldErrors,
-      issues: errors.formErrors,
+      issues: validated.error.flatten().formErrors,
+      fields: validated.error.flatten().fieldErrors as Record<string, string>,
     };
   }
 
-  const { moduleId, questionId, ...questionData } = validated.data;
-
   try {
-    if (questionId) {
-      // Update existing question
-      await updateQuestion(moduleId, questionId, questionData);
-      revalidatePath(`/dashboard/modules/${moduleId}`);
-      return { message: 'Pertanyaan berhasil diperbarui!', success: true };
-    } else {
-      // Add new question
-      await addQuestion(moduleId, questionData);
-      revalidatePath(`/dashboard/modules/${moduleId}`);
-      return { message: 'Pertanyaan berhasil ditambahkan!', success: true };
-    }
+    await replaceQuestionsForModule(
+      validated.data.moduleId,
+      validated.data.questions
+    );
+    revalidatePath(`/dashboard/modules/${validated.data.moduleId}`);
+    return { message: 'Pertanyaan berhasil disimpan!', success: true };
   } catch (error) {
     console.error(error);
-    return { message: 'Terjadi kesalahan.', success: false };
+    return { message: 'Terjadi kesalahan saat menyimpan.', success: false };
   }
 }
 
 export async function deleteQuestionAction(moduleId: string, questionId: string) {
-    try {
-        await deleteQuestion(moduleId, questionId);
-        revalidatePath(`/dashboard/modules/${moduleId}`);
-        return { message: 'Pertanyaan dihapus.', success: true };
-    } catch (error) {
-        return { message: 'Gagal menghapus pertanyaan.', success: false };
-    }
+  try {
+    await deleteQuestion(moduleId, questionId);
+    revalidatePath(`/dashboard/modules/${moduleId}`);
+    return { message: 'Pertanyaan dihapus.', success: true };
+  } catch (error) {
+    return { message: 'Gagal menghapus pertanyaan.', success: false };
+  }
 }

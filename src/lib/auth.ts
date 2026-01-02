@@ -2,10 +2,7 @@ import { cookies } from 'next/headers';
 import { SignJWT, jwtVerify } from 'jose';
 import type { User } from './types';
 
-const secretKey = new TextEncoder().encode(
-  process.env.SESSION_SECRET ||
-    'your-super-secret-key-that-is-at-least-32-bytes-long'
-);
+const secretKey = new TextEncoder().encode(process.env.SESSION_SECRET || 'your-super-secret-key-that-is-at-least-32-bytes-long');
 const key = 'session';
 
 export async function createSession(user: User) {
@@ -15,7 +12,7 @@ export async function createSession(user: User) {
     .setExpirationTime('7d')
     .sign(secretKey);
 
-  (await cookies()).set(key, session, {
+  cookies().set(key, session, {
     expires,
     httpOnly: true,
     path: '/',
@@ -23,21 +20,18 @@ export async function createSession(user: User) {
 }
 
 export async function getSession(): Promise<User | null> {
-  const sessionCookie = (await cookies()).get(key)?.value;
+  const sessionCookie = cookies().get(key)?.value;
   if (!sessionCookie) return null;
 
   try {
     const { payload } = await jwtVerify(sessionCookie, secretKey, {
-      algorithms: ['HS256'],
+        algorithms: ['HS256'],
     });
 
-    if (
-      payload.expires &&
-      Date.now() > new Date(payload.expires as string).getTime()
-    ) {
-      return null;
+    if (payload.expires && Date.now() > new Date(payload.expires as string).getTime()) {
+        return null;
     }
-
+    
     return payload.user as User;
   } catch (error) {
     console.error('Failed to verify session:', error);
@@ -46,5 +40,5 @@ export async function getSession(): Promise<User | null> {
 }
 
 export async function deleteSession() {
-  (await cookies()).delete(key);
+  cookies().delete(key);
 }

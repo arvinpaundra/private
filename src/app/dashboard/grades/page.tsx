@@ -47,9 +47,18 @@ export default function GradesPage() {
   const { toast } = useToast();
 
   const fetchGrades = React.useCallback(async () => {
-    const gradesData = await getGrades();
-    setGrades(gradesData);
-  }, []);
+    try {
+      const gradesData = await getGrades();
+      setGrades(gradesData);
+    } catch (error) {
+      console.error(error);
+      toast({
+        title: 'Error',
+        description: 'Gagal mengambil tingkat kelas.',
+        variant: 'destructive',
+      });
+    }
+  }, [toast]);
 
   React.useEffect(() => {
     fetchGrades();
@@ -72,15 +81,16 @@ export default function GradesPage() {
   };
 
   const handleDelete = async (gradeId: string) => {
-    const result = await deleteGrade(gradeId);
-    if(result.success) {
-        toast({
-            title: 'Tingkat Kelas Dihapus',
-            description: 'Tingkat kelas telah dihapus secara permanen.',
-            variant: 'destructive',
-        });
-        fetchGrades();
-    } else {
+    try {
+      await deleteGrade(gradeId);
+      toast({
+          title: 'Tingkat Kelas Dihapus',
+          description: 'Tingkat kelas telah dihapus secara permanen.',
+          variant: 'destructive',
+      });
+      fetchGrades();
+    } catch (error) {
+        console.error(error);
         toast({
             title: 'Error',
             description: 'Gagal menghapus tingkat kelas.',
@@ -101,7 +111,7 @@ export default function GradesPage() {
           </div>
           <Button onClick={handleAddClick}>
             <PlusCircle className="mr-2" />
-            Tambah Tingkat Kelas
+            Tambah Tingkat
           </Button>
         </CardHeader>
         <CardContent className="grid gap-4 md:grid-cols-2">
@@ -153,7 +163,7 @@ export default function GradesPage() {
           ))}
            {grades.length === 0 && (
                 <div className="text-center text-muted-foreground col-span-full p-8">
-                    <p>Belum ada tingkat kelas.</p>
+                    <p>Belum ada tingkat kelas yang dibuat.</p>
                 </div>
             )}
         </CardContent>

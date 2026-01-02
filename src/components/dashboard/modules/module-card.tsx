@@ -50,7 +50,7 @@ const StatusToggle = ({ module }: { module: Module }) => {
     startTransition(async () => {
       const result = await toggleModulePublish(module.id);
       toast({
-        title: result?.isPublished ? 'Modul Diterbitkan' : 'Modul Dibatalkan Penerbitannya',
+        title: result?.isPublished ? 'Modul Diterbitkan' : 'Modul Ditarik',
         description: `"${result?.title}" sekarang ${
           result?.isPublished ? 'terlihat' : 'tersembunyi'
         } bagi siswa.`,
@@ -76,7 +76,7 @@ const StatusToggle = ({ module }: { module: Module }) => {
             <Info className="h-4 w-4 text-muted-foreground cursor-pointer" />
           </TooltipTrigger>
           <TooltipContent side="top" align="center" className="max-w-xs text-center">
-            <p>Menerbitkan modul akan membuatnya dapat diakses oleh siswa dan mengaktifkan tindakan berbagi.</p>
+            <p>Menerbitkan modul membuatnya dapat diakses oleh siswa dan mengaktifkan tindakan berbagi.</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -92,7 +92,7 @@ export function ModuleCard({ module }: ModuleCardProps) {
       await deleteModule(module.id);
       toast({
         title: 'Modul Dihapus',
-        description: `"${module.title}" telah dihapus secara permanen.`,
+        description: `Modul "${module.title}" telah dihapus secara permanen.`,
         variant: 'destructive',
       });
     });
@@ -103,7 +103,7 @@ export function ModuleCard({ module }: ModuleCardProps) {
     navigator.clipboard.writeText(url);
     toast({
       title: 'Tautan Disalin',
-      description: 'Tautan kuis telah disalin ke papan klip.',
+      description: 'Tautan kuis telah disalin ke papan klip Anda.',
     });
   };
 
@@ -158,9 +158,9 @@ export function ModuleCard({ module }: ModuleCardProps) {
                 <AlertDialogHeader>
                 <AlertDialogTitle>Apakah Anda yakin?</AlertDialogTitle>
                 <AlertDialogDescription>
-                    Tindakan ini tidak dapat dibatalkan. Ini akan menghapus modul secara permanen
+                    Tindakan ini tidak dapat dibatalkan. Ini akan menghapus modul
                     <span className="font-bold"> "{module.title}" </span>
-                    dan semua pertanyaan terkait.
+                    secara permanen beserta semua pertanyaan terkait.
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

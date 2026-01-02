@@ -42,10 +42,11 @@ const formSchema = z.object({
 type ModuleFormProps = {
   subjects: Subject[];
   grades: Grade[];
+  onSuccess: () => void;
   setOpen?: (open: boolean) => void;
 };
 
-export function ModuleForm({ subjects, grades, setOpen }: ModuleFormProps) {
+export function ModuleForm({ subjects, grades, onSuccess, setOpen }: ModuleFormProps) {
   const [createState, createAction, isCreating] = useActionState(
     createModuleAction,
     { message: '', success: false }
@@ -66,7 +67,7 @@ export function ModuleForm({ subjects, grades, setOpen }: ModuleFormProps) {
     if (!isCreating && createState?.message) {
       if (createState.success && createState.data) {
         toast({ title: 'Modul Dibuat', description: createState.message });
-        setOpen?.(false);
+        onSuccess();
         router.push(`/dashboard/modules/${createState.data.id}`);
       } else if (!createState.success) {
         toast({
@@ -76,7 +77,7 @@ export function ModuleForm({ subjects, grades, setOpen }: ModuleFormProps) {
         });
       }
     }
-  }, [createState, isCreating, setOpen, router]);
+  }, [createState, isCreating, onSuccess, router]);
 
   return (
     <Form {...form}>

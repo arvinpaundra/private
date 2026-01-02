@@ -23,8 +23,6 @@ export default async function ModuleEditPage({ params }: ModuleEditPageProps) {
   }
 
   return (
-    <div className="space-y-6">
       <QuestionManagement module={module} />
-    </div>
   );
 }

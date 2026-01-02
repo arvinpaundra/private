@@ -32,7 +32,7 @@ export default async function SubmissionsPage() {
       <CardHeader>
         <CardTitle className="font-headline">Pengumpulan</CardTitle>
         <CardDescription>
-          Tinjau pengumpulan dari siswa untuk setiap modul. Klik setiap modul untuk melihat detailnya.
+          Tinjau pengumpulan dari siswa untuk setiap modul. Klik setiap modul untuk melihat detail.
         </CardDescription>
       </CardHeader>
       <CardContent>

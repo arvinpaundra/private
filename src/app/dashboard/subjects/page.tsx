@@ -47,9 +47,18 @@ export default function SubjectsPage() {
   const { toast } = useToast();
 
   const fetchSubjects = React.useCallback(async () => {
-    const subjectsData = await getSubjects();
-    setSubjects(subjectsData);
-  }, []);
+    try {
+        const subjectsData = await getSubjects();
+        setSubjects(subjectsData);
+    } catch (error) {
+        console.error(error);
+        toast({
+            title: 'Error',
+            description: 'Gagal mengambil mata pelajaran.',
+            variant: 'destructive',
+        });
+    }
+  }, [toast]);
 
   React.useEffect(() => {
     fetchSubjects();
@@ -72,15 +81,16 @@ export default function SubjectsPage() {
   };
 
   const handleDelete = async (subjectId: string) => {
-    const result = await deleteSubject(subjectId);
-    if(result.success) {
+    try {
+        await deleteSubject(subjectId);
         toast({
             title: 'Mata Pelajaran Dihapus',
             description: 'Mata pelajaran telah dihapus secara permanen.',
             variant: 'destructive',
         });
         fetchSubjects();
-    } else {
+    } catch (error) {
+        console.error(error);
         toast({
             title: 'Error',
             description: 'Gagal menghapus mata pelajaran.',
@@ -153,7 +163,7 @@ export default function SubjectsPage() {
           ))}
           {subjects.length === 0 && (
             <div className="text-center text-muted-foreground col-span-full p-8">
-              <p>Belum ada mata pelajaran.</p>
+              <p>Belum ada mata pelajaran yang dibuat.</p>
             </div>
           )}
         </CardContent>
