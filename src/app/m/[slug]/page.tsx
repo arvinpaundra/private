@@ -4,6 +4,8 @@ import { Button } from '@/components/ui/button';
 import { notFound } from 'next/navigation';
 import { getModuleBySlug } from '@/actions/modules';
 
+export const dynamic = 'force-dynamic';
+
 type ModulePageProps = {
   params: {
     slug: string;
@@ -20,10 +22,4 @@ export default async function ModulePage({ params }: ModulePageProps) {
   }
 
   return <ModuleRunner module={module} />;
-}
-
-export function generateStaticParams() {
-  // This is optional but good for performance.
-  // In a real app, you'd fetch all published module slugs.
-  return [{ slug: 'photosynthesis-basics' }];
 }

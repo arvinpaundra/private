@@ -18,7 +18,7 @@ interface DashboardStats {
   total_submitted_submissions: number;
 }
 
-export const revalidate = 30;
+export const dynamic = 'force-dynamic';
 
 export default async function DashboardPage() {
   const stats = await api.get<DashboardStats>('/v1/dashboard/statistics');

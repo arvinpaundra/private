@@ -2,6 +2,8 @@ import { notFound } from 'next/navigation';
 import { QuestionManagement } from '@/components/dashboard/questions/question-management';
 import { getModuleQuestionsBySlugAction } from '@/actions/modules';
 
+export const dynamic = 'force-dynamic';
+
 type ModuleEditPageProps = {
   params: {
     slug: string;
