@@ -2,7 +2,9 @@
 
 import * as z from 'zod';
 import { revalidatePath } from 'next/cache';
-import { addSubject, updateSubject } from '@/lib/data-actions';
+import { api, ApiError } from '@/lib/api-client';
+import type { Subject } from '@/lib/types';
+import { flattenFieldErrors } from '@/lib/form-utils';
 
 const subjectSchema = z.object({
   name: z.string().min(2, 'Nama harus minimal 2 karakter'),
@@ -15,6 +17,35 @@ export type SubjectFormState = {
   fields?: Record<string, string>;
   issues?: string[];
 };
+
+export async function getSubjectsAction(keywords?: string): Promise<Subject[]> {
+  try {
+    const queryParams = keywords
+      ? `?keywords=${encodeURIComponent(keywords)}`
+      : '';
+    return await api.get<Subject[]>(`/v1/subjects${queryParams}`);
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    throw new Error('Gagal mengambil data mata pelajaran.');
+  }
+}
+
+export async function deleteSubjectAction(id: string): Promise<void> {
+  try {
+    await api.delete(`/v1/subjects/${id}`);
+    revalidatePath('/dashboard/subjects');
+  } catch (error) {
+    if (error instanceof ApiError) {
+      if (error.status === 404) {
+        throw new Error('Mata pelajaran tidak ditemukan.');
+      }
+      throw new Error(error.message);
+    }
+    throw new Error('Gagal menghapus mata pelajaran.');
+  }
+}
 
 export async function saveSubjectAction(
   subjectId: string | null,
@@ -31,7 +62,7 @@ export async function saveSubjectAction(
     return {
       message: 'Validasi gagal.',
       success: false,
-      fields: errors.fieldErrors,
+      fields: flattenFieldErrors(errors.fieldErrors),
       issues: errors.formErrors,
     };
   }
@@ -41,17 +72,41 @@ export async function saveSubjectAction(
   try {
     if (subjectId) {
       // Update
-      await updateSubject(subjectId, { name, description });
+      await api.put<Subject>(`/v1/subjects/${subjectId}`, {
+        name,
+        description,
+      });
       revalidatePath('/dashboard/subjects');
       return { message: 'Mata pelajaran berhasil diperbarui.', success: true };
     } else {
       // Create
-      await addSubject({ name, description });
+      await api.post<Subject>('/v1/subjects', { name, description });
       revalidatePath('/dashboard/subjects');
       return { message: 'Mata pelajaran berhasil dibuat.', success: true };
     }
   } catch (error) {
-    console.error(error);
-    return { message: 'Terjadi kesalahan pada server.', success: false };
+    if (error instanceof ApiError) {
+      // Map backend errors to user-friendly messages
+      if (error.status === 400) {
+        return {
+          message: error.message || 'Data tidak valid.',
+          success: false,
+        };
+      }
+      if (error.status === 404) {
+        return { message: 'Mata pelajaran tidak ditemukan.', success: false };
+      }
+      if (error.status === 409) {
+        return {
+          message: 'Mata pelajaran dengan nama yang sama sudah ada.',
+          success: false,
+        };
+      }
+      return { message: error.message, success: false };
+    }
+    return {
+      message: 'Waduh, ada yang error nih! Coba lagi ya.',
+      success: false,
+    };
   }
 }

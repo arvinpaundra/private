@@ -3,6 +3,7 @@
 import * as z from 'zod';
 import { createSession, deleteSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { api, ApiError } from '@/lib/api-client';
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -10,12 +11,12 @@ const loginSchema = z.object({
 });
 
 const registerSchema = z.object({
-    name: z.string().min(2, 'Nama harus minimal 2 karakter'),
-    email: z.string().email('Alamat email tidak valid'),
-    password: z.string().min(8, 'Kata sandi harus minimal 8 karakter'),
+  name: z.string().min(3, 'Nama harus minimal 3 karakter'),
+  email: z.string().email('Alamat email tidak valid'),
+  password: z.string().min(8, 'Kata sandi harus minimal 8 karakter'),
 });
 
-export async function login(prevState: any, formData: FormData) {
+export async function login(_: any, formData: FormData) {
   const validated = loginSchema.safeParse(Object.fromEntries(formData));
 
   if (!validated.success) {
@@ -24,37 +25,70 @@ export async function login(prevState: any, formData: FormData) {
 
   const { email, password } = validated.data;
 
-  // In a real app, you'd verify credentials against a database
-  if (email === 'admin@example.com' && password === 'admin') {
-    const user = { id: 'user-1', name: 'Admin User', email: 'admin@example.com' };
-    await createSession(user);
-    // Redirect is handled on client-side for better UX
+  try {
+    // Send credentials to backend verification
+    const response = await api.post<{ user_id: string; access_token: string }>(
+      '/v1/auth/login',
+      {
+        email,
+        password,
+      }
+    );
+
+    // Create session with backend token
+    await createSession(response.access_token);
+
     return { success: true };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // Map backend errors to user-friendly messages
+      if (error.status === 400) {
+        return { error: 'Email atau kata sandi tidak valid.' };
+      }
+      return { error: error.message };
+    }
+    return { error: 'Waduh, ada yang error nih! Coba lagi ya.' };
+  }
+}
+
+export async function register(_: any, formData: FormData) {
+  const validated = registerSchema.safeParse(Object.fromEntries(formData));
+
+  if (!validated.success) {
+    return { error: 'Data formulir tidak valid.' };
   }
 
-  return { error: 'Email atau kata sandi tidak valid.' };
-}
+  const { name, email, password } = validated.data;
 
-export async function register(prevState: any, formData: FormData) {
-    const validated = registerSchema.safeParse(Object.fromEntries(formData));
-
-    if (!validated.success) {
-      return { error: 'Data formulir tidak valid.' };
-    }
-
-    const { name, email, password } = validated.data;
-
-    console.log('Mendaftarkan pengguna:', { name, email });
-    // In a real app, you'd create a new user in the database.
-    // For this demo, we'll just log it and simulate success.
+  try {
+    // Send registration data to backend
+    const response = await api.post<{ user_id: string; access_token: string }>(
+      '/v1/auth/register',
+      {
+        fullname: name,
+        email,
+        password,
+      }
+    );
 
     // Automatically log in the user after registration
-    const user = { id: `user-${Math.random()}`, name, email };
-    await createSession(user);
+    await createSession(response.access_token);
 
     return { success: true };
+  } catch (error) {
+    if (error instanceof ApiError) {
+      // Map backend errors to user-friendly messages
+      if (error.status === 409) {
+        return { error: 'Email sudah terdaftar.' };
+      }
+      if (error.status === 400) {
+        return { error: error.message || 'Data tidak valid.' };
+      }
+      return { error: error.message };
+    }
+    return { error: 'Oops, server lagi ngambek! Coba lagi nanti ya.' };
+  }
 }
-
 
 export async function logout() {
   await deleteSession();

@@ -1,9 +1,7 @@
 'use client';
 
-import * as React from 'react';
-import { useActionState } from 'react';
+import { useEffect, useActionState } from 'react';
 import { createModuleAction } from '@/actions/modules';
-import type { FormState } from '@/actions/modules';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -34,8 +32,8 @@ import { Loader2, Save } from 'lucide-react';
 
 const formSchema = z.object({
   title: z.string().min(3, 'Judul harus minimal 3 karakter'),
-  subjectId: z.string().min(1, 'Silakan pilih mata pelajaran'),
-  gradeId: z.string().min(1, 'Silakan pilih tingkat kelas'),
+  subject_id: z.string().min(1, 'Silakan pilih mata pelajaran'),
+  grade_id: z.string().min(1, 'Silakan pilih tingkat kelas'),
   description: z.string().optional(),
 });
 
@@ -43,45 +41,47 @@ type ModuleFormProps = {
   subjects: Subject[];
   grades: Grade[];
   onSuccess: () => void;
-  setOpen?: (open: boolean) => void;
 };
 
-export function ModuleForm({ subjects, grades, onSuccess, setOpen }: ModuleFormProps) {
-  const [createState, createAction, isCreating] = useActionState(
-    createModuleAction,
-    { message: '', success: false }
-  );
+export function ModuleForm({ subjects, grades, onSuccess }: ModuleFormProps) {
+  const [state, action, isPending] = useActionState(createModuleAction, {
+    message: '',
+    success: false,
+  });
   const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       title: '',
-      subjectId: '',
-      gradeId: '',
+      subject_id: '',
+      grade_id: '',
       description: '',
     },
   });
 
-  React.useEffect(() => {
-    if (!isCreating && createState?.message) {
-      if (createState.success && createState.data) {
-        toast({ title: 'Modul Dibuat', description: createState.message });
+  const { success, message, data } = state;
+
+  useEffect(() => {
+    if (!isPending && message) {
+      if (success) {
+        toast({ title: 'Modul Dibuat', description: message });
         onSuccess();
-        router.push(`/dashboard/modules/${createState.data.id}`);
-      } else if (!createState.success) {
+
+        if (data) router.push(`/dashboard/modules/${data?.slug}`);
+      } else {
         toast({
           title: 'Error',
-          description: createState.message,
+          description: message,
           variant: 'destructive',
         });
       }
     }
-  }, [createState, isCreating, onSuccess, router]);
+  }, [success, message, data, isPending]);
 
   return (
     <Form {...form}>
-      <form action={createAction} className="space-y-6">
+      <form action={action} className="space-y-6">
         <FormField
           control={form.control}
           name="title"
@@ -89,72 +89,69 @@ export function ModuleForm({ subjects, grades, onSuccess, setOpen }: ModuleFormP
             <FormItem>
               <FormLabel>Judul Modul</FormLabel>
               <FormControl>
-                <Input
-                  placeholder="cth., Pengenalan Fotosintesis"
-                  {...field}
-                />
+                <Input placeholder="cth., Pengenalan Fotosintesis" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
           )}
         />
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            <FormField
-                control={form.control}
-                name="subjectId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Mata Pelajaran</FormLabel>
-                    <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        name={field.name}
-                    >
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Pilih mata pelajaran" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {subjects.map(subject => (
-                            <SelectItem key={subject.id} value={subject.id}>
-                            {subject.name}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-             <FormField
-                control={form.control}
-                name="gradeId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Tingkat Kelas</FormLabel>
-                    <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        name={field.name}
-                    >
-                        <FormControl>
-                        <SelectTrigger>
-                            <SelectValue placeholder="Pilih tingkat kelas" />
-                        </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {grades.map(grade => (
-                            <SelectItem key={grade.id} value={grade.id}>
-                            {grade.name}
-                            </SelectItem>
-                        ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+          <FormField
+            control={form.control}
+            name="subject_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Mata Pelajaran</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  name={field.name}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih mata pelajaran" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {subjects.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="grade_id"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Tingkat Kelas</FormLabel>
+                <Select
+                  onValueChange={field.onChange}
+                  value={field.value}
+                  name={field.name}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Pilih tingkat kelas" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {grades.map((grade) => (
+                      <SelectItem key={grade.id} value={grade.id}>
+                        {grade.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
         </div>
         <FormField
           control={form.control}
@@ -178,8 +175,8 @@ export function ModuleForm({ subjects, grades, onSuccess, setOpen }: ModuleFormP
         />
 
         <div className="flex justify-end">
-          <Button type="submit" disabled={isCreating}>
-            {isCreating ? (
+          <Button type="submit" disabled={isPending}>
+            {isPending ? (
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
             ) : (
               <Save className="mr-2 h-4 w-4" />

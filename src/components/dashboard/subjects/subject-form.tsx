@@ -51,7 +51,9 @@ export function SubjectForm({ subject, onSuccess }: SubjectFormProps) {
     if (!isPending && state.message) {
       if (state.success) {
         toast({
-          title: subject ? 'Mata Pelajaran Diperbarui' : 'Mata Pelajaran Dibuat',
+          title: subject
+            ? 'Mata Pelajaran Diperbarui'
+            : 'Mata Pelajaran Dibuat',
           description: state.message,
         });
         onSuccess();
@@ -67,10 +69,11 @@ export function SubjectForm({ subject, onSuccess }: SubjectFormProps) {
 
   React.useEffect(() => {
     form.reset({
-        name: subject?.name || '',
-        description: subject?.description || '',
+      name: subject?.name || '',
+      description: subject?.description || '',
     });
-  }, [subject, form]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subject]);
 
   return (
     <Form {...form}>

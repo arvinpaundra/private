@@ -1,27 +1,27 @@
 import { NextResponse, type NextRequest } from 'next/server';
-// import { getSession } from './lib/auth';
 
 export async function middleware(request: NextRequest) {
-  // const session = await getSession();
-  const session = null;
+  const token = request.cookies.get('auth_token')?.value;
   const { pathname } = request.nextUrl;
 
-  const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/register');
+  const isAuthRoute =
+    pathname.startsWith('/login') || pathname.startsWith('/register');
+  const isProtectedRoute = pathname.startsWith('/dashboard');
 
-  // If the user is authenticated
-  if (session) {
-    // and tries to access login/register, redirect to dashboard
+  // If the user has a token (authenticated)
+  if (token) {
+    // Redirect authenticated users away from login/register
     if (isAuthRoute) {
       return NextResponse.redirect(new URL('/dashboard', request.url));
     }
-    // Otherwise, allow the request
+    // Allow access to protected routes
     return NextResponse.next();
   }
 
-  // If the user is not authenticated
-  // and tries to access a protected route, redirect to login
-  if (!isAuthRoute && pathname.startsWith('/dashboard')) {
-    //  return NextResponse.redirect(new URL('/login', request.url));
+  // If the user has no token (not authenticated)
+  // Redirect to login if trying to access protected routes
+  if (isProtectedRoute) {
+    return NextResponse.redirect(new URL('/login', request.url));
   }
 
   // Allow access to public routes and auth routes
@@ -29,6 +29,14 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Matcher is cleared to bypass auth
-  matcher: [],
+  matcher: [
+    /*
+     * Match all request paths except for the ones starting with:
+     * - _next/static (static files)
+     * - _next/image (image optimization files)
+     * - favicon.ico (favicon file)
+     * - public folder
+     */
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+  ],
 };

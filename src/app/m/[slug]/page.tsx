@@ -1,8 +1,8 @@
-import { getModuleBySlug } from '@/lib/data-actions';
 import { ModuleRunner } from '@/components/module-runner';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { notFound } from 'next/navigation';
+import { getModuleBySlug } from '@/actions/modules';
 
 type ModulePageProps = {
   params: {
@@ -11,19 +11,19 @@ type ModulePageProps = {
 };
 
 export default async function ModulePage({ params }: ModulePageProps) {
-  const module = await getModuleBySlug(params.slug);
+  const { slug } = await params;
 
-  if (!module || !module.isPublished) {
+  const module = await getModuleBySlug(slug);
+
+  if (!module || !module.is_published) {
     notFound();
   }
 
-  return (
-    <ModuleRunner module={module} />
-  );
+  return <ModuleRunner module={module} />;
 }
 
 export function generateStaticParams() {
-    // This is optional but good for performance.
-    // In a real app, you'd fetch all published module slugs.
-    return [{ slug: 'photosynthesis-basics' }];
+  // This is optional but good for performance.
+  // In a real app, you'd fetch all published module slugs.
+  return [{ slug: 'photosynthesis-basics' }];
 }
