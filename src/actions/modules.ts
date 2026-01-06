@@ -95,7 +95,7 @@ export async function getModuleQuestionsBySlugAction(
 
 export async function getModuleBySlug(slug: string): Promise<Module> {
   try {
-    return await api.get<Module>(`/v1/modules/${slug}`);
+    return await api.get<Module>(`/v1/modules/${slug}/published`);
   } catch (error) {
     if (error instanceof ApiError) {
       if (error.status === 404) {
