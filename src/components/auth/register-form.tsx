@@ -42,19 +42,24 @@ export function RegisterForm() {
 
   React.useEffect(() => {
     if (state?.success) {
-      toast({ title: 'Selamat Datang!', description: 'Akun Anda telah dibuat.' });
-      router.push('/dashboard');
+      toast({
+        title: 'Horeee!',
+        description:
+          'Akun kamu udah jadi! Yuk login dan mulai buat modul belajar.',
+      });
+      router.push('/login');
     } else if (state?.error) {
-      toast({ title: 'Error', description: state.error, variant: 'destructive' });
+      toast({
+        title: 'Waduh!',
+        description: state.error,
+        variant: 'destructive',
+      });
     }
   }, [state, router]);
 
   return (
     <Form {...form}>
-      <form 
-        action={action}
-        className="grid gap-4"
-      >
+      <form action={action} className="grid gap-4">
         <FormField
           control={form.control}
           name="name"

@@ -40,19 +40,23 @@ export function LoginForm() {
 
   React.useEffect(() => {
     if (state?.success) {
-      toast({ title: 'Sukses', description: 'Berhasil masuk.' });
+      toast({
+        title: 'Selamat datang kembali! ',
+        description: 'Yuk lanjutin modul belajarnya!',
+      });
       router.push('/dashboard');
     } else if (state?.error) {
-      toast({ title: 'Error', description: state.error, variant: 'destructive' });
+      toast({
+        title: 'Waduh!',
+        description: state.error,
+        variant: 'destructive',
+      });
     }
   }, [state, router]);
 
   return (
     <Form {...form}>
-      <form
-        action={action}
-        className="grid gap-4"
-      >
+      <form action={action} className="grid gap-4">
         <FormField
           control={form.control}
           name="email"

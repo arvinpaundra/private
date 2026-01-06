@@ -62,17 +62,11 @@ export async function register(_: any, formData: FormData) {
 
   try {
     // Send registration data to backend
-    const response = await api.post<{ user_id: string; access_token: string }>(
-      '/v1/auth/register',
-      {
-        fullname: name,
-        email,
-        password,
-      }
-    );
-
-    // Automatically log in the user after registration
-    await createSession(response.access_token);
+    await api.post('/v1/auth/register', {
+      fullname: name,
+      email,
+      password,
+    });
 
     return { success: true };
   } catch (error) {
